@@ -1,0 +1,377 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <title>The Snakening</title>
+    <base href="./" />
+    <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
+    <link href="css/app.css" rel="stylesheet" />
+    <link href="TheSnakening.Web.styles.css" rel="stylesheet" />
+</head>
+
+<body>
+
+    <div id="app">
+        <div id="loading" style="display: table-cell; margin: auto; width:100vw; height:100vh; vertical-align: middle; background: #ffcc10;">
+            <div style="display: block; margin: auto; width: 9em; color: white;font-family: 'Segoe UI', sans-serif;">
+                <div style="text-align: center; font-size: 0.85em;">Made with<br/><a href="https://github.com/kniEngine/kni"><img src="kni.png" border="0" alt="Kni"></a></div>
+                <div style="text-align: center; font-size: 1.8em;">loading&nbsp;<marquee style="width:0.9em; vertical-align: bottom;">.&nbsp;.&nbsp;.&nbsp;&nbsp;&nbsp;</marquee></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="blazor-error-ui">
+        An unhandled error has occurred.
+        <a href="" class="reload">Reload</a>
+        <a class="dismiss">x</a>
+    </div>
+
+    <script src="_framework/blazor.webassembly.js" autostart="false"></script>
+    <script type="module">
+        import { BrotliDecode } from './js/decode.min.js';
+        window.BrotliDecode = BrotliDecode;
+        // Set this to enable Brotli (.br) decompression on static webServers
+        // that don't support content compression and http://.
+        var enableBrotliDecompression = false;
+        Blazor.start({
+            loadBootResource: function (type, name, defaultUri, integrity)
+            {
+                if (enableBrotliDecompression === true && type !== 'dotnetjs' && location.hostname !== 'localhost')
+                {
+                    return (async function()
+                    {
+                        const response = await fetch(defaultUri + '.br', { cache: 'no-cache' });
+                        if (!response.ok)
+                            throw new Error(response.statusText);
+                        const originalResponseBuffer = await response.arrayBuffer();
+                        const originalResponseArray = new Int8Array(originalResponseBuffer);
+                        const contentType = (type === 'dotnetwasm')
+                                          ? 'application/wasm'
+                                          : 'application/octet-stream';
+                        const decompressedResponseArray = BrotliDecode(originalResponseArray);
+                        return new Response(decompressedResponseArray,
+                                            { headers: { 'content-type': contentType }
+                                   });
+                    })();
+                }
+            }
+        });
+    </script>
+
+    <script src="_content/nkast.Wasm.JSInterop/js/JSObject.10.0.3.js"></script>
+    <script src="_content/nkast.Wasm.Dom/js/Window.10.0.3.js"></script>
+    <script src="_content/nkast.Wasm.Dom/js/Document.10.0.3.js"></script>
+    <script src="_content/nkast.Wasm.Dom/js/Navigator.10.0.3.js"></script>
+    <script src="_content/nkast.Wasm.Dom/js/Gamepad.10.0.3.js"></script>
+    <script src="_content/nkast.Wasm.Dom/js/Media.10.0.3.js"></script>
+    <script src="_content/nkast.Wasm.XHR/js/XHR.10.0.3.js"></script>
+    <script src="_content/nkast.Wasm.Canvas/js/Canvas.10.0.3.js"></script>
+    <script src="_content/nkast.Wasm.Canvas/js/CanvasGLContext.10.0.3.js"></script>
+    <script src="_content/nkast.Wasm.Audio/js/Audio.10.0.3.js"></script>
+    <script src="_content/nkast.Wasm.XR/js/XR.10.0.3.js"></script>
+
+    <script>
+        window.snkDX = 0;
+        window.snkDY = 0;
+        window.snkTakeDX = function () { var v = window.snkDX; window.snkDX = 0; return v; };
+        window.snkTakeDY = function () { var v = window.snkDY; window.snkDY = 0; return v; };
+        // Lets you point the page at another game server, e.g. ?server=ws://localhost:8080/ws
+        window.snkDefaultServerUrl = 'wss://thesnakening-server.fly.dev/ws';
+        window.snkServerUrlOverride = function ()
+        {
+            return new URLSearchParams(window.location.search).get('server') || window.snkDefaultServerUrl;
+        };
+        window.snkIsTouchDevice = function ()
+        {
+            return (navigator.maxTouchPoints || 0) > 0 && window.matchMedia('(pointer: coarse)').matches;
+        };
+
+        // Touch state for the on-screen joystick/buttons: "id:x:y,..." for fingers down, then "|x:y,..." for new touches since the last read.
+        window.snkTouches = new Map();
+        window.snkTouchTaps = [];
+        function snkTouchXY(t)
+        {
+            var c = document.getElementById('theCanvas');
+            if (!c) return [t.clientX, t.clientY];
+            var r = c.getBoundingClientRect();
+            return [(t.clientX - r.left) * c.width / r.width, (t.clientY - r.top) * c.height / r.height];
+        }
+        document.addEventListener('touchstart', function (e)
+        {
+            for (var i = 0; i < e.changedTouches.length; i++)
+            {
+                var t = e.changedTouches[i], p = snkTouchXY(t);
+                window.snkTouches.set(t.identifier, p);
+                window.snkTouchTaps.push(p);
+            }
+        }, { passive: true });
+        document.addEventListener('touchmove', function (e)
+        {
+            for (var i = 0; i < e.changedTouches.length; i++)
+            {
+                var t = e.changedTouches[i];
+                if (window.snkTouches.has(t.identifier)) window.snkTouches.set(t.identifier, snkTouchXY(t));
+            }
+        }, { passive: true });
+        function snkTouchEnd(e)
+        {
+            for (var i = 0; i < e.changedTouches.length; i++) window.snkTouches.delete(e.changedTouches[i].identifier);
+        }
+        document.addEventListener('touchend', snkTouchEnd, { passive: true });
+        document.addEventListener('touchcancel', snkTouchEnd, { passive: true });
+        window.snkTakeTouches = function ()
+        {
+            var s = '';
+            window.snkTouches.forEach(function (p, id) { s += id + ':' + Math.round(p[0]) + ':' + Math.round(p[1]) + ','; });
+            s += '|';
+            for (var i = 0; i < window.snkTouchTaps.length; i++)
+                s += Math.round(window.snkTouchTaps[i][0]) + ':' + Math.round(window.snkTouchTaps[i][1]) + ',';
+            window.snkTouchTaps.length = 0;
+            return s;
+        };
+
+        window.snkWantLock = false;
+        window.snkTryLock = function ()
+        {
+            var canvas = document.getElementById('theCanvas');
+            if (!canvas || document.pointerLockElement === canvas || window.snkIsTouchDevice() || !canvas.requestPointerLock)
+                return;
+            try
+            {
+                var p = canvas.requestPointerLock();
+                if (p && p.catch) p.catch(function () { });
+            }
+            catch (e) { }
+        };
+        window.snkSetWantLock = function (want)
+        {
+            window.snkWantLock = want;
+            var canvas = document.getElementById('theCanvas');
+            if (want)
+                window.snkTryLock();
+            else if (document.pointerLockElement === canvas)
+                document.exitPointerLock();
+        };
+        window.snkIsPointerLocked = function ()
+        {
+            return document.pointerLockElement === document.getElementById('theCanvas');
+        };
+
+        document.addEventListener('mousemove', function (e)
+        {
+            var canvas = document.getElementById('theCanvas');
+            if (document.pointerLockElement === canvas)
+            {
+                window.snkDX += e.movementX;
+                window.snkDY += e.movementY;
+            }
+        });
+
+        function tickJS()
+        {
+            window.theInstance.invokeMethod('TickDotNet');
+            window.requestAnimationFrame(tickJS);
+        }
+
+        window.initRenderJS = (instance) =>
+        {
+            window.theInstance = instance;
+
+            // set initial canvas size
+            var canvas = document.getElementById('theCanvas');
+            var holder = document.getElementById('canvasHolder');
+            canvas.width = holder.clientWidth;
+            canvas.height = holder.clientHeight;
+            // disable context menu on right click
+            canvas.addEventListener("contextmenu", e => e.preventDefault());
+            // Only capture the pointer while actually playing; menus keep the normal cursor.
+            canvas.addEventListener("mousedown", function ()
+            {
+                if (window.snkWantLock)
+                    window.snkTryLock();
+            });
+
+            window.addEventListener("resize", function()
+            {
+                canvas.width = holder.clientWidth;
+                canvas.height = holder.clientHeight;
+            });
+
+            // begin game loop
+            window.requestAnimationFrame(tickJS);
+        };
+
+        // Typed characters for the in-game name box; the game drains this buffer every frame.
+        window.snkCaptureText = false;
+        window.snkTyped = '';
+        window.snkSetTextCapture = function (on) { window.snkCaptureText = on; window.snkTyped = ''; };
+        window.snkTakeTyped = function () { var t = window.snkTyped; window.snkTyped = ''; return t; };
+        window.snkPromptName = function (current)
+        {
+            var result = window.prompt('Your name', current || '');
+            return result === null ? null : result;
+        };
+        // Mouse wheel zoom, in pixels (line/page deltas from some browsers are converted).
+        window.snkWheel = 0;
+        window.addEventListener('wheel', function (e)
+        {
+            var k = e.deltaMode === 1 ? 33 : e.deltaMode === 2 ? 600 : 1;
+            window.snkWheel += Math.max(-300, Math.min(300, e.deltaY * k));
+            e.preventDefault();
+        }, { passive: false });
+        window.snkTakeWheel = function () { var v = window.snkWheel; window.snkWheel = 0; return v; };
+        window.snkPromptChat = function ()
+        {
+            var result = window.prompt('Say something to everyone online', '');
+            return result === null ? '' : result;
+        };
+        window.snkOpenUrl = function (url)
+        {
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = '';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        };
+        window.snkLoadName = function ()
+        {
+            try { return localStorage.getItem('snkPlayerName') || ''; } catch (e) { return ''; }
+        };
+        window.snkSaveName = function (name)
+        {
+            try { localStorage.setItem('snkPlayerName', name); } catch (e) { }
+        };
+
+        // ----- Sound effects (WebAudio) and Snakening Radio (<audio>) -----
+        // Browsers only allow audio after a user gesture, so everything waits for the first click/key/tap.
+        var snkAudio = { ctx: null, pcm: {}, buf: {}, unlocked: false, list: [], idx: 0, vol: 0.5, el: null, playing: -1 };
+
+        window.snkSfxRegister = function (id, b64, rate)
+        {
+            var bin = atob(b64), n = bin.length >> 1, f = new Float32Array(n);
+            for (var i = 0; i < n; i++)
+            {
+                var v = bin.charCodeAt(2 * i) | (bin.charCodeAt(2 * i + 1) << 8);
+                if (v >= 32768) v -= 65536;
+                f[i] = v / 32768;
+            }
+            snkAudio.pcm[id] = { f: f, rate: rate };
+            snkAudio.buf[id] = null;
+        };
+        window.snkSfxPlay = function (id, pitch, vol)
+        {
+            var c = snkAudio.ctx;
+            if (!c || c.state !== 'running') return;
+            var b = snkAudio.buf[id];
+            if (!b)
+            {
+                var p = snkAudio.pcm[id];
+                if (!p) return;
+                b = c.createBuffer(1, p.f.length, p.rate);
+                b.getChannelData(0).set(p.f);
+                snkAudio.buf[id] = b;
+            }
+            var src = c.createBufferSource();
+            src.buffer = b;
+            src.playbackRate.value = Math.pow(2, pitch);
+            var g = c.createGain();
+            g.gain.value = vol;
+            src.connect(g);
+            g.connect(c.destination);
+            src.start();
+        };
+
+        function snkRadioEl()
+        {
+            if (!snkAudio.el)
+            {
+                var el = new Audio();
+                el.preload = 'auto';
+                el.addEventListener('ended', function ()
+                {
+                    snkAudio.idx = (snkAudio.idx + 1) % snkAudio.list.length;
+                    snkRadioStart(true);
+                });
+                el.addEventListener('playing', function ()
+                {
+                    snkAudio.playing = snkAudio.idx;
+                    console.log('[RADIO] playing ' + snkAudio.list[snkAudio.idx]);
+                });
+                el.addEventListener('pause', function () { if (!el.ended) snkAudio.playing = -1; });
+                snkAudio.el = el;
+            }
+            return snkAudio.el;
+        }
+        function snkRadioStart(newTrack)
+        {
+            if (!snkAudio.unlocked || snkAudio.vol <= 0 || !snkAudio.list.length) return;
+            var el = snkRadioEl();
+            if (newTrack || !el.src) el.src = snkAudio.list[snkAudio.idx];
+            el.volume = snkAudio.vol;
+            var p = el.play();
+            if (p && p.catch) p.catch(function (e) { console.warn('[RADIO] play failed: ' + e); });
+        }
+        window.snkRadioSetPlaylist = function (csv) { snkAudio.list = csv ? csv.split(',') : []; };
+        window.snkRadioPlay = function (i) { snkAudio.idx = i; snkAudio.playing = -1; snkRadioStart(true); };
+        window.snkRadioSetVolume = function (v)
+        {
+            snkAudio.vol = Math.max(0, Math.min(1, v));
+            var el = snkAudio.el;
+            if (el && snkAudio.vol <= 0) { el.pause(); return; }
+            if (el) el.volume = snkAudio.vol;
+            if (!el || el.paused) snkRadioStart(false);
+        };
+        window.snkRadioCurrent = function () { return snkAudio.playing; };
+        window.snkLoadAudioPrefs = function ()
+        {
+            try { return localStorage.getItem('snkAudio') || ''; } catch (e) { return ''; }
+        };
+        window.snkSaveAudioPrefs = function (text)
+        {
+            try { localStorage.setItem('snkAudio', text); } catch (e) { }
+        };
+
+        function snkAudioUnlock()
+        {
+            if (!snkAudio.ctx)
+            {
+                try { snkAudio.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { }
+            }
+            if (snkAudio.ctx && snkAudio.ctx.state === 'suspended') snkAudio.ctx.resume();
+            snkAudio.unlocked = true;
+            if (!snkAudio.el || (snkAudio.el.paused && !snkAudio.el.ended)) snkRadioStart(false);
+        }
+        ['pointerdown', 'keydown', 'touchend'].forEach(function (ev)
+        {
+            window.addEventListener(ev, snkAudioUnlock, { capture: true });
+        });
+
+        window.addEventListener("keydown", function(event)
+        {
+            if (window.snkCaptureText && event.key && event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey)
+            {
+                window.snkTyped += event.key;
+                // Keeps keys like ' and / from opening the browser's quick-find while typing in chat.
+                event.preventDefault();
+            }
+            // Prevent Arrows Keys and Spacebar scrolling the outer page
+            // when running inside an iframe. e.g: itch.io embedding.
+            // Tab would move focus off the canvas; menus use it to move between rows.
+            if ([9, 32, 37, 38, 39, 40].indexOf(event.keyCode) > -1)
+                event.preventDefault();
+        });
+        window.addEventListener("wheel", function(event)
+        {
+            // Prevent Mousewheel scrolling the outer page
+            // when running inside an iframe. e.g: itch.io embedding.
+            event.preventDefault();
+        }, { passive: false });
+    </script>
+</body>
+
+</html>
