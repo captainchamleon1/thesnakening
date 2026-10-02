@@ -364,7 +364,24 @@
             // Tab would move focus off the canvas; menus use it to move between rows.
             if ([9, 32, 37, 38, 39, 40].indexOf(event.keyCode) > -1)
                 event.preventDefault();
+            if (event.key === 'Alt')
+            {
+                window.snkAlt = true;
+                event.preventDefault();
+            }
         });
+        // Alt is the free-look key; without preventDefault on keyup the browser moves focus to its own menu.
+        window.snkAlt = false;
+        window.addEventListener("keyup", function (event)
+        {
+            if (event.key === 'Alt')
+            {
+                window.snkAlt = false;
+                event.preventDefault();
+            }
+        });
+        window.addEventListener("blur", function () { window.snkAlt = false; });
+        window.snkAltHeld = function () { return window.snkAlt; };
         window.addEventListener("wheel", function(event)
         {
             // Prevent Mousewheel scrolling the outer page
