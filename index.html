@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 
 <head>
@@ -23,6 +23,39 @@
             </div>
         </div>
     </div>
+
+    <style>
+        #changelog-tab { position: fixed; left: 0; top: 40%; z-index: 50; background: rgba(20, 14, 50, 0.85); color: #ffd86e;
+            border: 1px solid #8f7dff; border-left: none; border-radius: 0 8px 8px 0; padding: 10px 6px; cursor: pointer;
+            writing-mode: vertical-rl; transform: rotate(180deg); font: bold 13px 'Segoe UI', sans-serif; letter-spacing: 1px; user-select: none; }
+        #changelog { position: fixed; left: 0; top: 0; bottom: 0; width: min(320px, 85vw); z-index: 51; background: rgba(12, 10, 32, 0.95);
+            color: #e8e4ff; border-right: 1px solid #8f7dff; padding: 18px 18px 18px 20px; overflow-y: auto; font: 14px/1.45 'Segoe UI', sans-serif;
+            transform: translateX(-105%); transition: transform 0.2s ease; }
+        #changelog.open { transform: none; }
+        #changelog h2 { font-size: 18px; color: #ffd86e; margin: 0 0 12px; }
+        #changelog h3 { font-size: 13px; color: #a99cff; margin: 14px 0 4px; text-transform: uppercase; letter-spacing: 1px; }
+        #changelog ul { margin: 0; padding-left: 18px; }
+        #changelog-close { position: absolute; right: 12px; top: 10px; cursor: pointer; color: #a99cff; font-size: 20px; }
+        body.playing #changelog-tab { display: none; }
+    </style>
+    <div id="changelog-tab" onclick="document.getElementById('changelog').classList.toggle('open')">WHAT'S NEW</div>
+    <div id="changelog">
+        <span id="changelog-close" onclick="document.getElementById('changelog').classList.remove('open')">&times;</span>
+        <h2>What's new</h2>
+        <h3>Oct 5, 2026</h3>
+        <ul>
+            <li>Hyperspace! Eat suns and moons to store them (bottom right), then press E, right-click or tap the button for a burst of speed. 10s cooldown.</li>
+            <li>Sensitivity slider in Settings.</li>
+            <li>Big snakes have a wider turning circle.</li>
+            <li>Smoother online play: faster server, steadier snakes.</li>
+            <li>Snake heads blend into the body; scale texture removed.</li>
+            <li>Fire pattern removed.</li>
+            <li>Bots can grow big now, but the other bots gang up on the giants.</li>
+        </ul>
+    </div>
+    <script>
+        document.addEventListener("pointerlockchange", () => document.body.classList.toggle("playing", !!document.pointerLockElement));
+    </script>
 
     <div id="blazor-error-ui">
         An unhandled error has occurred.
