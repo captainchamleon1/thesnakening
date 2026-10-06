@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "TheSnakening.Web",
   "resources": {
-    "hash": "sha256-eDKMlwwVwT2ryUxNLUQ/oiIrxDPzKn0+D4sIP3xn4LI=",
+    "hash": "sha256-AkF18kIGZb6920jQ8LGiS5bE0tQNqtywIEQUKtcDXtA=",
     "jsModuleNative": {
       "dotnet.native.8.0.14.n6hzaxdd73.js": "sha256-gSi/5h5DZ+oqACSmS6Z74kQ+Bmj03c1tBgpseMTnSbs="
     },
@@ -9,7 +9,7 @@
       "dotnet.runtime.8.0.14.d11jcyervs.js": "sha256-44Vu7OSX4JP89eoc3oTYbYfC5C7USoIWuCw1W9IG6N4="
     },
     "wasmNative": {
-      "dotnet.native.wasm": "sha256-5V4SbwXvJ6dKED749mZ/r6kmekWoxIb+WiaNzKG3je8="
+      "dotnet.native.wasm": "sha256-pMpnTg2oGW4YsXVRZEvwGUcMYxWJ2PUJh8rReptjY6M="
     },
     "assembly": {
       "Kni.Platform.wasm": "sha256-qBJ5Iqqh7+KqZNYgRYu5EtnMSH2hJQVWiDQzgiEZFdY=",
@@ -210,8 +210,8 @@
       "System.Xml.XmlSerializer.wasm": "sha256-bxy+h3A1P97OpPlIqXa8Xzn0a3tHmj+nh3GIP3GgZ8w=",
       "System.Xml.XPath.wasm": "sha256-dcWdGVm1WmayaqAxGLlO2jIavluLcZl5qqysjESIAgQ=",
       "System.Xml.XPath.XDocument.wasm": "sha256-wP+Tyl14gWjBZ2zXTetQbBSZ7an+oOc9sSmZW/iOq7s=",
-      "TheSnakening.Shared.wasm": "sha256-UtsK+05hnEFjn5llB9NRje7bl2Wid/4CHUDD8sPWWuE=",
-      "TheSnakening.Web.wasm": "sha256-oTapldSQs9iKTwfwEU0jTPmLOtgnhWQStVuzJJb3xTI=",
+      "TheSnakening.Shared.wasm": "sha256-aELz1QXhTWN5WU9j70Wc5Oe19+tJH6SwQZIy8QVsPUU=",
+      "TheSnakening.Web.wasm": "sha256-dzWKRWHRraaXH11vB8Yfb7FjYs/Ri1s8UaRcOY34iyM=",
       "WindowsBase.wasm": "sha256-YIatv+WE2aaMxr44B6o5zHhsQPQol6NHIny8ZcYQl/Q=",
       "Xna.Framework.Audio.wasm": "sha256-NuG+WTgnVbloOAP/kXXK2oAxhnEPudExO34Ze8QmoqQ=",
       "Xna.Framework.Content.wasm": "sha256-G0oqEm4evY0xA5tk232gxzx6b8ExRAI8ujTGFBqKAbw=",
